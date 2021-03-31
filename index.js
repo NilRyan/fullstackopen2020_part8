@@ -1,5 +1,5 @@
 require('dotenv').config()
-const { ApolloServer, gql } = require('apollo-server')
+const { ApolloServer, gql, UserInputError } = require('apollo-server')
 const mongoose = require('mongoose')
 const Book = require('./models/book')
 const Author = require('./models/author')
@@ -82,23 +82,27 @@ const resolvers = {
       const doesAuthorExist = await Author.exists({ name: args.author })
 
       console.log('exist?',doesAuthorExist)
-
-      if(doesAuthorExist === false) {
-        const newAuthor = new Author ({ name: args.author})
-        const newAuthorID = await newAuthor.save()
-        console.log('newAuthor?', newAuthorID)
-
-        const book = new Book ({ ...args, author: newAuthorID._id })
-        
-        return book.save().then(a => a.populate('author').execPopulate())
+      try {
+        if(doesAuthorExist === false) {
+          const newAuthor = new Author ({ name: args.author})
+          const newAuthorID = await newAuthor.save()
+          console.log('newAuthor?', newAuthorID)
+  
+          const book = new Book ({ ...args, author: newAuthorID._id })
+          return book.save().then(a => a.populate('author').execPopulate())
+        }
+  
+      const existingAuthor = await Author.find({ name: args.author})
+      console.log(existingAuthor[0]._id)
+      const id = existingAuthor[0]._id;
+  
+      const book = new Book ({ ...args, author: id })
+      return book.save().then(a => a.populate('author').execPopulate())
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
       }
-     
-    const existingAuthor = await Author.find({ name: args.author})
-    console.log(existingAuthor[0]._id)
-    const id = existingAuthor[0]._id;
-
-    const book = new Book ({ ...args, author: id })
-    return book.save().then(a => a.populate('author').execPopulate())
 
     },
     editAuthor: async (root, args) => {

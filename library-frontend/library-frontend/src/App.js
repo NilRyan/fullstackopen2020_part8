@@ -56,7 +56,6 @@ const App = () => {
         { token && <button onClick={() => setPage('add')}>add book</button>}
         { token && <button onClick={() => {
           setPage('recommend')
-          console.log(user.favoriteGenre)
           favoriteBooks({variables: { genre: user.favoriteGenre}})
         }
         }

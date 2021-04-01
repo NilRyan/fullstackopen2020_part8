@@ -13,7 +13,8 @@ const Authors = (props) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    editAuthor({ variables: { name: author, setBornTo: birthYear}})
+    await editAuthor({ variables: { name: author, setBornTo: birthYear}})
+    setBirthYear('')
   }
 
   if (!props.show) {
@@ -52,24 +53,28 @@ const Authors = (props) => {
         </tbody>
       </table>
 
-      <div>
-        <h1>Set birthyear</h1>
-        <form onSubmit={handleSubmit} >
-          <div>
-            <select onChange={(e) => setAuthor(e.target.value)}>
-              {authors.map((author) => <option key={author.name} value={author.name}>
-              {author.name}
-              </option>)}
-            </select>
-          </div>
-        
-          <div>
-            born:<input type="number" value={birthYear} onChange={(e) => setBirthYear(Number(e.target.value))}/>
-          </div>
-          <button type="submit">update author</button>
-        </form>
+{
+props.token &&
+  <div>
+    <h1>Set birthyear</h1>
 
+    <form onSubmit={handleSubmit} >
+      <div>
+        <select onChange={(e) => setAuthor(e.target.value)}>
+          {authors.map((author) => <option key={author.name} value={author.name}>
+          {author.name}
+          </option>)}
+        </select>
       </div>
+
+      <div>
+        born:<input type="number" value={birthYear} onChange={(e) => setBirthYear(Number(e.target.value))}/>
+      </div>
+      <button type="submit">update author</button>
+    </form>
+
+  </div>
+}
     </div>
   )
 }

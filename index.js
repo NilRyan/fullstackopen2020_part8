@@ -48,6 +48,7 @@ const typeDefs = gql`
     authorCount: Int!
     allBooks(author: String, genre: String): [Book!]!
     allAuthors: [Author!]!
+    favoriteBooks(genre: String!): [Book!]!
     me: User
   }
   type Mutation {
@@ -94,6 +95,11 @@ const resolvers = {
         return Book.find({genres: { $in: [args.genre] }}).populate('author')
       } 
       return Book.find({}).populate('author')
+    },
+    favoriteBooks: (root, args) => {
+      return Book.find({ 
+        genres: { $in: [ args.genre ]}
+      }).populate('author')
     },
     allAuthors: () => Author.find({}),
     me: (root, args, context) => {

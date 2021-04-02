@@ -41,6 +41,7 @@ const typeDefs = gql`
   type Author {
     name: String!
     born: Int
+    books: [String!]!
     bookCount: Int
   }
   type Query {
@@ -126,6 +127,8 @@ const resolvers = {
           console.log('newAuthor?', newAuthorID)
   
           const book = new Book ({ ...args, author: newAuthorID._id })
+          newAuthor.books.concat(book._id)
+          await newAuthor.save()
           const bookAdded = (await book.save()).populate('author').execPopulate()
 
           pubsub.publish('BOOK_ADDED', { bookAdded })
@@ -135,8 +138,10 @@ const resolvers = {
       const existingAuthor = await Author.find({ name: args.author})
       console.log(existingAuthor[0]._id)
       const id = existingAuthor[0]._id;
-  
+      
       const book = new Book ({ ...args, author: id })
+      existingAuthor.books.concat(book._id)
+      await existingAuthor.save()
       const bookAdded = (await book.save()).populate('author').execPopulate()
 
       pubsub.publish('BOOK_ADDED', { bookAdded })
@@ -191,9 +196,10 @@ const resolvers = {
   },
   Author: {
     bookCount: async (root) => {
-      const existingAuthor = await Author.find({ name: root.name})
-      const authorID = existingAuthor[0]._id
-      const number = Book.countDocuments({ author: authorID })
+      const existingAuthor = await Author.find({ name: root.name}).populate('books')
+      
+      const number = existingAuthor.books.length
+      console.log('---bookCount()---')
       return number
     }
   }, 

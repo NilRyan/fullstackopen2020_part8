@@ -67,10 +67,7 @@ const App = () => {
     setPage('authors')
   }
 
-  console.log(user)
-  console.log('favorites', favorites)
 
-  
   return (
     <div>
       <div>

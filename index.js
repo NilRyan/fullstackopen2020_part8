@@ -1,12 +1,12 @@
 require('dotenv').config()
-const { ApolloServer, gql, UserInputError } = require('apollo-server')
+const { ApolloServer, gql, UserInputError, PubSub } = require('apollo-server')
 const mongoose = require('mongoose')
 const Book = require('./models/book')
 const Author = require('./models/author')
 const User = require('./models/user')
 const { v1: uuid } = require('uuid')
 const jwt = require('jsonwebtoken')
-
+const pubsub = new PubSub()
 
 const JWT_SECRET = process.env.SECRET
 const MONGODB_URI = process.env.MONGODB_URI
@@ -71,6 +71,9 @@ const typeDefs = gql`
       password: String!
     ): Token 
   }
+  type Subscription {
+    bookAdded: Book!
+  }
 `
 
 const resolvers = {
@@ -123,6 +126,7 @@ const resolvers = {
           console.log('newAuthor?', newAuthorID)
   
           const book = new Book ({ ...args, author: newAuthorID._id })
+          pubsub.publish('BOOK_ADDED', { bookAdded: book })
           return book.save().then(a => a.populate('author').execPopulate())
         }
   
@@ -131,6 +135,7 @@ const resolvers = {
       const id = existingAuthor[0]._id;
   
       const book = new Book ({ ...args, author: id })
+      pubsub.publish('BOOK_ADDED', { bookAdded: book })
       return book.save().then(a => a.populate('author').execPopulate())
       } catch (error) {
         throw new UserInputError(error.message, {
@@ -187,6 +192,11 @@ const resolvers = {
       const number = Book.countDocuments({ author: authorID })
       return number
     }
+  }, 
+  Subscription: {
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterator(['BOOK_ADDED'])
+    }
   }
 }
 
@@ -205,6 +215,7 @@ const server = new ApolloServer({
   }
 })
 
-server.listen().then(({ url }) => {
+server.listen().then(({ url, subscriptionsUrl }) => {
   console.log(`Server ready at ${url}`)
+  console.log(`Subscriptions ready at ${subscriptionsUrl}`)
 })

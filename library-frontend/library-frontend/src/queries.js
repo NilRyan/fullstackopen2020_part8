@@ -83,3 +83,15 @@ export const EDIT_AUTHOR = gql`
       born
     }
   }`
+
+export const BOOK_ADDED = gql`
+  subscription {
+    bookAdded {
+      title
+      author {
+        name
+      }
+      genres
+      id
+    }
+  }`

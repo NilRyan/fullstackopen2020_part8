@@ -126,8 +126,10 @@ const resolvers = {
           console.log('newAuthor?', newAuthorID)
   
           const book = new Book ({ ...args, author: newAuthorID._id })
-          pubsub.publish('BOOK_ADDED', { bookAdded: book })
-          return book.save().then(a => a.populate('author').execPopulate())
+          const bookAdded = (await book.save()).populate('author').execPopulate()
+
+          pubsub.publish('BOOK_ADDED', { bookAdded })
+          return bookAdded
         }
   
       const existingAuthor = await Author.find({ name: args.author})
@@ -135,8 +137,10 @@ const resolvers = {
       const id = existingAuthor[0]._id;
   
       const book = new Book ({ ...args, author: id })
-      pubsub.publish('BOOK_ADDED', { bookAdded: book })
-      return book.save().then(a => a.populate('author').execPopulate())
+      const bookAdded = (await book.save()).populate('author').execPopulate()
+
+      pubsub.publish('BOOK_ADDED', { bookAdded })
+      return bookAdded
       } catch (error) {
         throw new UserInputError(error.message, {
           invalidArgs: args,
